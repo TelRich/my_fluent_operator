@@ -1,0 +1,10 @@
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterInput
+metadata:
+  name: dummy
+  labels:
+    fluentbit.fluent.io/enabled: "true"
+spec:
+  dummy:
+    tag: my_dummy
+    rate: 3

@@ -69,26 +69,26 @@ spec:
     matchLabels:
       fluentbit.fluent.io/enabled: "true"
       fluentbit.fluent.io/mode: "k8s"
----
-apiVersion: fluentbit.fluent.io/v1alpha2
-kind: ClusterInput
-metadata:
-  name: tail
-  labels:
-    fluentbit.fluent.io/enabled: "true"
-    fluentbit.fluent.io/mode: "k8s"
-spec:
-  tail:
-    tag: kube.*
-    path: /var/log/containers/*.log
-    # Exclude logs from util pod
-    excludePath: /var/log/containers/utils_default_utils-*.log
-    parser: docker   #If it is a containerd environment, then this item should be set to cri
-    refreshIntervalSeconds: 10
-    memBufLimit: 5MB
-    skipLongLines: true
-    db: /fluent-bit/tail/pos.db
-    dbSync: Normal
+# ---
+# apiVersion: fluentbit.fluent.io/v1alpha2
+# kind: ClusterInput
+# metadata:
+#   name: tail
+#   labels:
+#     fluentbit.fluent.io/enabled: "true"
+#     fluentbit.fluent.io/mode: "k8s"
+# spec:
+#   tail:
+#     tag: kube.*
+#     path: /var/log/containers/*.log
+#     # Exclude logs from util pod
+#     excludePath: /var/log/containers/utils_default_utils-*.log
+#     parser: docker   #If it is a containerd environment, then this item should be set to cri
+#     refreshIntervalSeconds: 10
+#     memBufLimit: 5MB
+#     skipLongLines: true
+#     db: /fluent-bit/tail/pos.db
+#     dbSync: Normal
 # ---
 # apiVersion: fluentbit.fluent.io/v1alpha2
 # kind: ClusterInput
@@ -162,11 +162,59 @@ spec:
 #   match: "*"
 #   stdout: {}
 
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterOutput
+metadata:
+  name: quickstart
+  labels:
+    fluentbit.fluent.io/enabled: "true"
+    fluentbit.fluent.io/mode: "k8s"
+spec:
+  matchRegex: (?:kube|service)\.(.*)
+  match: "*"
+  es:
+    host: quickstart-es-http.default.svc
+    port: 9200
+    index: "cluster"
+    traceOutput: True
+    generateID: true
+    traceError: true
+    httpUser:
+      valueFrom:
+        secretKeyRef:
+          key: user
+          name: es-user-pw
+    httpPassword:
+      valueFrom:
+        secretKeyRef:
+          key: elastic
+          name: es-user-pw
+    suppressTypeName: "On"
+
+
+# ---
+# apiVersion: fluentbit.fluent.io/v1alpha2
+# kind: Output
+# metadata:
+#   name: quickstart
+#   labels:
+#     fluentbit.fluent.io/enabled: "true"
+#     fluentbit.fluent.io/mode: "k8s"
+#     fluentbit.fluent.io/component: logging
+# spec:
+#   matchRegex: (?:kube|service)\.(.*)
+#   es:
+#     host: quickstart-es-http.default.svc
+#     port: 9200
+#     index: "cluster"
+#     traceOutput: True
+
 # ---
 # apiVersion: fluentbit.fluent.io/v1alpha2
 # kind: ClusterOutput
 # metadata:
-#   name: k8s-app-elasticsearch
+#   name: quickstart
 #   labels:
 #     fluentbit.fluent.io/enabled: "true"
 #     fluentbit.fluent.io/mode: "k8s"
@@ -178,3 +226,15 @@ spec:
 #     port: 9200
 #     index: "cluster"
 #     traceOutput: True
+
+# apiVersion: elasticsearch.k8s.elastic.co/v1
+# kind: Elasticsearch
+# metadata:
+#   name: quickstart
+# spec:
+#   version: 8.9.1
+#   nodeSets:
+#   - name: default
+#     count: 1
+#     config:
+#       node.store.allow_mmap: false

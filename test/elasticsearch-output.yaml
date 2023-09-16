@@ -1,16 +1,46 @@
+# apiVersion: fluentbit.fluent.io/v1alpha2
+# kind: ClusterOutput
+# metadata:
+#   name: es
+#   labels:
+#     fluentbit.fluent.io/enabled: "true"
+#     fluentbit.fluent.io/component: logging
+# spec:
+#   matchRegex: (?:kube|service)\.(.*)
+#   es:
+#     host: elasticsearch-logging-data.kubesphere-logging-system.svc
+#     port: 9200
+#     generateID: true
+#     logstashPrefix: ks-logstash-log
+#     logstashFormat: true
+#     timeKey: "@timestamp"
+
 apiVersion: fluentbit.fluent.io/v1alpha2
 kind: ClusterOutput
 metadata:
-  name: es
+  name: k8s-app-es
   labels:
     fluentbit.fluent.io/enabled: "true"
-    fluentbit.fluent.io/component: logging
+    fluentbit.fluent.io/mode: "k8s"
 spec:
   matchRegex: (?:kube|service)\.(.*)
   es:
-    host: elasticsearch-logging-data.kubesphere-logging-system.svc
+    host: elasticsearch-es-http.elastic-system.svc
     port: 9200
+    httpUser:
+      valueFrom:
+        secretKeyRef:
+          key: user
+          name: elasticsearch-es-elastic-user
+    httpPassword:
+      valueFrom:
+        secretKeyRef:
+          key: elastic
+          name: elasticsearch-es-elastic-user
     generateID: true
-    logstashPrefix: ks-logstash-log
-    logstashFormat: true
-    timeKey: "@timestamp"
+    traceError: true
+    index: k8s-app
+
+    # logstashPrefix: fluent-app-log-fb-only
+    # logstashFormat: true
+    # timeKey: "@timestamp"
